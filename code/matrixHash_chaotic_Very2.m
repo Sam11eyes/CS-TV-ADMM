@@ -1,0 +1,82 @@
+function hash = matrixHash_chaotic_Very2(matrix,a,b,c,d,x0,u0)
+
+hash = zeros(1,128,"logical");
+
+bits = zeros(size(matrix, 1), size(matrix, 2), 8,"logical");
+for i = 1:8
+    bits(:, :, i) = bitget(matrix, i);
+end
+bitstream = reshape(bits, 1, []); 
+
+bisblock = reshape(bitstream,2464, 128);
+
+for i = 1:2464
+    test = reshape(bisblock(i,1:128),16,8);
+    int8Values = uint8(test * [128; 64; 32; 16; 8; 4; 2; 1]);
+    wr = u0/2 + double(int8Values)/1024;
+    
+    x = [x0,x0,x0,x0];
+    for j = 1:1
+        FCCM_parasite = [wr((j-1)*4+1),wr((j-1)*4+2),wr((j-1)*4+3),wr((j-1)*4+4),wr((j-1)*4+4),wr((j-1)*4+3),wr((j-1)*4+2),wr((j-1)*4+1),u0,u0];
+        for k = 1:10
+            x(j) = FCCM1(x(j),FCCM_parasite(k));  %%这里修改了迭代函数
+        end
+        if j ~= 4
+            x(j+1) = x(j);
+        end
+    end
+    
+ 
+    x = cat4d(x,a,b,c,d,i,2);  % 传入分组序号i
+    
+    key_sequence = [extract_bits(x(1), 32), extract_bits(x(2), 32), extract_bits(x(3), 32), extract_bits(x(4), 32);];
+    
+    hash = bitxor(key_sequence,hash);
+    hash = bitxor(bisblock(i,1:128),hash);
+end
+
+end
+
+
+
+function state = cat4d(x,a,b,c,d,i,iterations)
+
+% 基础矩阵
+C = [a, b, 0, 0;
+     c, d, 0, 0;
+     0, 0, a, b;
+     0, 0, c, d];
+
+
+C(2,:) = C(2,:) + i * C(1,:);  
+
+state = x';
+
+for iter = 1:iterations
+    state = mod(C * state,1);
+end
+state = state';
+
+end
+
+function bit_array = extract_bits(value, num_bits)
+bit_array = false(1, num_bits);
+if value == 0
+    return;
+end
+temp = value;
+for i = 1:num_bits
+    temp = temp * 2;
+    bit_val = (temp >= 1);
+    bit_array(i) = bit_val;
+    if bit_val
+        temp = temp - 1;
+    end
+end
+end
+ %FCCM一次迭代
+function y = FCCM1(x,mu)
+    v = 0.15;
+    h = 0.45;
+    y = mod(x + (h^v/gamma(1+v))*cos(mu*acos(x)), 2);
+end

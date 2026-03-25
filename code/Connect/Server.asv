@@ -1,0 +1,99 @@
+%%终端设备
+
+function Server()
+
+
+
+    % 创建TCP服务器，监听端口55000
+    server = tcpserver("0.0.0.0", 55000, "ConnectionChangedFcn", @connectionCallback);
+    disp('接收服务器已启动，等待客户端连接...');
+    
+    % 主循环控制
+    server.UserData.keepRunning = true;
+    
+    while server.UserData.keepRunning
+        pause(0.1);
+        if ~isvalid(server)
+            break;
+        end
+    end
+    
+    % 清理资源
+    if isvalid(server)
+        delete(server);
+    end
+    disp('服务器已关闭');
+    
+    function connectionCallback(src, ~)
+        if src.Connected
+            clientAddress = src.ClientAddress;
+            disp(['客户端已连接，IP: ' clientAddress]);
+            
+            % 配置二进制数据传输模式
+            configureCallback(src, "off"); % 先关闭回调
+            
+            try
+                %% 第一阶段：接收4个double参数
+                disp('等待接收4个double参数...');
+                params = read(src, 4, "double");
+                disp(['接收到参数: ', num2str(params')]);
+                
+                %% 发送参数接收确认
+                write(src, uint8(1), "uint8");
+                disp('已发送参数接收确认');
+                
+                %% 第二阶段：接收矩阵
+                disp('等待接收矩阵尺寸信息...');
+                matrixSize = read(src, 2, "int32");
+                disp(['将接收矩阵，大小: ' num2str(matrixSize)]);
+                
+                % 检查尺寸是否为154×256
+                if ~isequal(matrixSize, [154, 256])
+                    error('接收的矩阵尺寸不符合预期');
+                end
+                
+                x01 = params(1); x02 = params(3);
+                mu1 = params(2); mu2 = params(4);
+                
+
+                % 接收矩阵数据
+                disp('开始接收矩阵数据...');
+                data = read(src, 154 * 256, "double");
+                receivedMatrix = reshape(data, 154, 256);
+                disp('矩阵数据接收完成');
+                
+                reconstructed_image = EncodeFinal(yfinal,x01,x02,mu1,mu2);
+                figure(1);
+                imshow(uint8(reconstructed_image),'Border','tight');
+
+                % 验证矩阵
+                disp(['接收矩阵大小: ' num2str(size(receivedMatrix))]);
+                disp(['矩阵示例值(1,1): ' num2str(receivedMatrix(1,1))]);
+                disp(['矩阵示例值(154,256): ' num2str(receivedMatrix(154,256))]);
+                
+                % 发送最终确认
+                write(src, uint8(1), "uint8");
+                disp('已发送最终确认');
+              
+
+            catch ME
+                disp(['数据传输错误: ' ME.message]);
+                % 发送错误代码
+                if isvalid(src)
+                    write(src, uint8(0), "uint8");
+                end
+            end
+            
+            % 关闭连接
+            if isvalid(src)
+                delete(src);
+            end
+            
+        else
+            disp('客户端断开连接');
+            if isvalid(src)
+                delete(src);
+            end
+        end
+    end
+end

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">用户仪表盘</h3>
+            </div>
+            <div class="card-body text-center">
+                <h1>欢迎, {{ username }}!</h1>
+                <p class="lead mt-4">您已成功登录用户系统</p>
+                
+                <!-- 设备配置面板 -->
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">IoT设备配置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('dashboard') }}">  <!-- 修改action为当前路由 -->
+                            {{ form.hidden_tag() }}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.iot_client.label(class="form-label") }}
+                                    {{ form.iot_client(class="form-control", placeholder="输入设备唯一ID") }}
+                                    {% if form.iot_client.errors %}
+                                        <div class="invalid-feedback d-block">
+                                        {{ form.iot_client.errors[0] }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form.iot_server.label(class="form-label") }}
+                                    {{ form.iot_server(class="form-control", placeholder="服务器地址") }}
+                                    {% if form.iot_server.errors %}
+                                        <div class="invalid-feedback d-block">
+                                        {{ form.iot_server.errors[0] }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-grid mb-3">
+                                {{ form.submit1(class="btn btn-primary") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+
+                <div class="d-flex justify-content-center mt-4">
+                    <div class="card me-3" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">压缩感知</h5>
+                            <p class="card-text">减少信息数据</p>
+                        </div>
+                    </div>
+                    <div class="card me-3" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">混沌哈希</h5>
+                            <p class="card-text">更快更安全</p>
+                        </div>
+                    </div>
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">定时更新密钥</h5>
+                            <p class="card-text">背后的数据卫士</p>
+                        </div>
+                    </div>
+                </div>                
+                <div class="mt-5">
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">注销登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

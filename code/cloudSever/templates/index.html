@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3>用户登录系统</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead text-center">欢迎使用我们的用户登录系统</p>
+                <p class="text-center">请注册新账号或登录现有账号</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">登录</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
